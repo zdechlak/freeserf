@@ -1151,6 +1151,12 @@ handle_serf_leaving_building_state(serf_t *serf)
 			serf->s.free_walking.neg_dist1 = neg_dist1;
 			serf->s.free_walking.neg_dist2 = neg_dist2;
 			serf->s.free_walking.flags = 0;
+		} else if (serf->state == SERF_STATE_53) {
+			int dist_col = serf->s.leaving_building.field_B;
+			int dist_row = serf->s.leaving_building.dest;
+			int field_D = serf->s.leaving_building.dest2;
+			int field_E = serf->s.leaving_building.dir;
+			/* TODO ... */
 		} else {
 			LOGD("serf", "unhandled next state when leaving building.");
 		}
@@ -3604,16 +3610,42 @@ handle_serf_state_knight_leave_for_walk_to_fight(serf_t *serf)
 		return;
 	}
 
-	map_pos_t flag_pos = MAP_MOVE_DOWN_RIGHT(serf->pos);
-	if (MAP_SERF_INDEX(flag_pos) == 0) {
-		/* TODO */
+	building_t *building = game_get_building(MAP_OBJ_INDEX(serf->pos));
+	map_pos_t new_pos = MAP_MOVE_DOWN_RIGHT(serf->pos);
+
+	if (MAP_SERF_INDEX(new_pos) == 0) {
+		map_set_serf_index(serf->pos, 0);
+		map_set_serf_index(new_pos, SERF_INDEX(serf));
+		serf->pos = new_pos;
+
+		int slope = 31 - road_bld_slope_arr[(building->bld >> 2) & 0x3f];
+		serf->animation = get_walking_animation(MAP_HEIGHT(new_pos) - MAP_HEIGHT(serf->pos), DIR_DOWN_RIGHT);
+		serf->counter = (slope * counter_from_animation[serf->animation]) >> 5;
+		serf->anim = globals.anim;
+
+		/* For clean state change, save the values first. */
+		/* TODO maybe knight_leave_for_walk_to_fight can
+		   share leaving_building state vars. */
+		int dist_col = serf->s.leave_for_walk_to_fight.dist_col;
+		int dist_row = serf->s.leave_for_walk_to_fight.dist_row;
+		int field_D = serf->s.leave_for_walk_to_fight.field_D;
+		int field_E = serf->s.leave_for_walk_to_fight.field_E;
+		serf_state_t next_state = serf->s.leave_for_walk_to_fight.next_state;
+
+		serf_log_state_change(serf, SERF_STATE_LEAVING_BUILDING);
+		serf->state = SERF_STATE_LEAVING_BUILDING;
+		/* TODO names for leaving_building vars make no sense here. */
+		serf->s.leaving_building.field_B = dist_col;
+		serf->s.leaving_building.dest = dist_row;
+		serf->s.leaving_building.dest2 = field_D;
+		serf->s.leaving_building.dir = field_E;
+		serf->s.leaving_building.next_state = next_state;
 	} else {
-		serf_t *other = game_get_serf(MAP_SERF_INDEX(flag_pos));
+		serf_t *other = game_get_serf(MAP_SERF_INDEX(new_pos));
 		if (SERF_PLAYER(serf) == SERF_PLAYER(other)) {
 			/* TODO */
 		} else {
 			/* Go back to defending the building. */
-			building_t *building = game_get_building(serf->pos);
 			int max_capacity = -1;
 			switch (BUILDING_TYPE(building)) {
 			case BUILDING_HUT:
