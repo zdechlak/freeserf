@@ -3596,6 +3596,12 @@ handle_serf_knight_attacking_defeat_state(serf_t *serf)
 }
 
 static void
+handle_serf_state_knight_leave_for_walk_to_fight(serf_t *serf)
+{
+	/* TODO */
+}
+
+static void
 handle_serf_idle_on_path_state(serf_t *serf)
 {
 	map_2_t *map_data = MAP_2_DATA(globals.map_mem2_ptr);
@@ -3916,6 +3922,9 @@ update_serf(serf_t *serf)
 		break;
 	case SERF_STATE_KNIGHT_OCCUPY_ENEMY_BUILDING:
 		/* TODO */
+		break;
+	case SERF_STATE_KNIGHT_LEAVE_FOR_WALK_TO_FIGHT:
+		handle_serf_state_knight_leave_for_walk_to_fight(serf);
 		break;
 	case SERF_STATE_IDLE_ON_PATH:
 		handle_serf_idle_on_path_state(serf);
