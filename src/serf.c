@@ -3598,7 +3598,54 @@ handle_serf_knight_attacking_defeat_state(serf_t *serf)
 static void
 handle_serf_state_knight_leave_for_walk_to_fight(serf_t *serf)
 {
-	/* TODO */
+	if (MAP_SERF_INDEX(serf->pos) != SERF_INDEX(serf) &&
+	    MAP_SERF_INDEX(serf->pos) != 0) {
+		serf->animation = 82;
+		return;
+	}
+
+	map_pos_t flag_pos = MAP_MOVE_DOWN_RIGHT(serf->pos);
+	if (MAP_SERF_INDEX(flag_pos) == 0) {
+		/* TODO */
+	} else {
+		serf_t *other = game_get_serf(MAP_SERF_INDEX(flag_pos));
+		if (SERF_PLAYER(serf) == SERF_PLAYER(other)) {
+			/* TODO */
+		} else {
+			/* Go back to defending the building. */
+			building_t *building = game_get_building(serf->pos);
+			int max_capacity = -1;
+			switch (BUILDING_TYPE(building)) {
+			case BUILDING_HUT:
+				serf_log_state_change(serf, SERF_STATE_DEFENDING_HUT);
+				serf->state = SERF_STATE_DEFENDING_HUT;
+				max_capacity = 3;
+				break;
+			case BUILDING_TOWER:
+				serf_log_state_change(serf, SERF_STATE_DEFENDING_TOWER);
+				serf->state = SERF_STATE_DEFENDING_TOWER;
+				max_capacity = 6;
+				break;
+			case BUILDING_FORTRESS:
+				serf_log_state_change(serf, SERF_STATE_DEFENDING_FORTRESS);
+				serf->state = SERF_STATE_DEFENDING_FORTRESS;
+				max_capacity = 12;
+				break;
+			default:
+				NOT_REACHED();
+				break;
+			}
+
+			int total_knights = (building->stock1 & 0xf) + ((building->stock1 >> 4) & 0xf);
+			if (total_knights < max_capacity) {
+				building->stock1 += 0x10;
+				serf->s.defending.next_knight = building->serf_index;
+				building->serf_index = SERF_INDEX(serf);
+			} else {
+				serf->animation = 82;
+			}
+		}
+	}
 }
 
 static void
