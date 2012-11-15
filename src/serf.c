@@ -92,6 +92,7 @@ static const char *serf_state_name[] = {
 	[SERF_STATE_KNIGHT_ATTACKING_VICTORY] = "KNIGHT ATTACKING VICTORY",
 	[SERF_STATE_KNIGHT_ATTACKING_DEFEAT] = "KNIGHT ATTACKING DEFEAT",
 	[SERF_STATE_KNIGHT_OCCUPY_ENEMY_BUILDING] = "KNIGHT OCCUPY ENEMY BUILDING",
+	[SERF_STATE_KNIGHT_LEAVE_FOR_WALK_TO_FIGHT] = "KNIGHT LEAVE FOR WALK TO FIGHT",
 	[SERF_STATE_IDLE_ON_PATH] = "IDLE ON PATH",
 	[SERF_STATE_WAIT_IDLE_ON_PATH] = "WAIT IDLE ON PATH",
 	[SERF_STATE_WAKE_AT_FLAG] = "WAKE AT FLAG",
@@ -3607,6 +3608,7 @@ handle_serf_state_knight_leave_for_walk_to_fight(serf_t *serf)
 	if (MAP_SERF_INDEX(serf->pos) != SERF_INDEX(serf) &&
 	    MAP_SERF_INDEX(serf->pos) != 0) {
 		serf->animation = 82;
+		serf->counter = 0;
 		return;
 	}
 
@@ -3643,7 +3645,8 @@ handle_serf_state_knight_leave_for_walk_to_fight(serf_t *serf)
 	} else {
 		serf_t *other = game_get_serf(MAP_SERF_INDEX(new_pos));
 		if (SERF_PLAYER(serf) == SERF_PLAYER(other)) {
-			/* TODO */
+			serf->animation = 82;
+			serf->counter = 0;
 		} else {
 			/* Go back to defending the building. */
 			int max_capacity = -1;
@@ -3675,6 +3678,7 @@ handle_serf_state_knight_leave_for_walk_to_fight(serf_t *serf)
 				building->serf_index = SERF_INDEX(serf);
 			} else {
 				serf->animation = 82;
+				serf->counter = 0;
 			}
 		}
 	}
