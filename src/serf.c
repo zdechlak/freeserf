@@ -3450,7 +3450,7 @@ handle_serf_knight_engaging_building_state(serf_t *serf)
 
 	if (serf->counter < 0) {
 		map_obj_t obj = MAP_OBJ(MAP_MOVE_UP_LEFT(serf->pos));
-		if (obj >= MAP_OBJ_SMALL_BUILDING ||
+		if (obj >= MAP_OBJ_SMALL_BUILDING &&
 		    obj <= MAP_OBJ_CASTLE) {
 			building_t *building = game_get_building(MAP_OBJ_INDEX(MAP_MOVE_UP_LEFT(serf->pos)));
 			if (BUILDING_IS_DONE(building) &&
@@ -3613,6 +3613,45 @@ handle_serf_knight_attacking_defeat_state(serf_t *serf)
 	if (serf->counter < 0) {
 		map_set_serf_index(serf->pos, 0);
 		game_free_serf(SERF_INDEX(serf));
+	}
+}
+
+static void
+handle_knight_occupy_enemy_building(serf_t *serf)
+{
+	uint16_t delta = globals.anim - serf->anim;
+	serf->anim = globals.anim;
+	serf->counter -= delta;
+
+	while (serf->counter < 0) {
+		map_pos_t pos = MAP_MOVE_UP_LEFT(serf->pos);
+		if (MAP_OBJ(pos) >= MAP_OBJ_SMALL_BUILDING &&
+		    MAP_OBJ(pos) <= MAP_OBJ_CASTLE) {
+			building_t *building = game_get_building(MAP_OBJ_INDEX(pos));
+			if (!BUILDING_IS_BURNING(building) &&
+			    (BUILDING_TYPE(building) == BUILDING_HUT ||
+			     BUILDING_TYPE(building) == BUILDING_TOWER ||
+			     BUILDING_TYPE(building) == BUILDING_FORTRESS ||
+			     BUILDING_TYPE(building) == BUILDING_CASTLE)) {
+				if (BUILDING_PLAYER(building) == SERF_PLAYER(serf)) {
+					/* TODO enter building if there is space. */
+				} else if (building->serf_index == 0) {
+					/* TODO take the building. */
+				} else {
+					serf_log_state_change(serf, SERF_STATE_KNIGHT_ENGAGING_BUILDING);
+					serf->state = SERF_STATE_KNIGHT_ENGAGING_BUILDING;
+					serf->animation = 167;
+					serf->counter = 191;
+					continue;
+				}
+			}
+		}
+
+		/* Something is wrong. */
+		serf_log_state_change(serf, SERF_STATE_LOST);
+		serf->state = SERF_STATE_LOST;
+		serf->s.lost.field_B = 0;
+		serf->counter = 0;
 	}
 }
 
@@ -4084,7 +4123,7 @@ update_serf(serf_t *serf)
 		handle_serf_knight_attacking_defeat_state(serf);
 		break;
 	case SERF_STATE_KNIGHT_OCCUPY_ENEMY_BUILDING:
-		/* TODO */
+		handle_knight_occupy_enemy_building(serf);
 		break;
 	case SERF_STATE_KNIGHT_FREE_WALKING:
 		handle_state_knight_free_walking(serf);
