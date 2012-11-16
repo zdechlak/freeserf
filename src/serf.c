@@ -1920,7 +1920,13 @@ handle_serf_free_walking_state_dest_reached(serf_t *serf)
 	case SERF_KNIGHT_2:
 	case SERF_KNIGHT_3:
 	case SERF_KNIGHT_4:
-		serf->counter = 0;
+		if (serf->s.free_walking.neg_dist1 == -128) {
+			goto other_type;
+		} else {
+			serf_log_state_change(serf, SERF_STATE_KNIGHT_OCCUPY_ENEMY_BUILDING);
+			serf->state = SERF_STATE_KNIGHT_OCCUPY_ENEMY_BUILDING;
+			serf->counter = 0;
+		}
 		break;
 	default:
 	other_type:
