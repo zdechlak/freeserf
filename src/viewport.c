@@ -2026,10 +2026,13 @@ draw_serf_row(map_pos_t pos, int y_base, int cols, int x_base, frame_t *frame)
 	};
 
 	for (int i = 0; i < cols; i++, x_base += MAP_TILE_WIDTH, pos = MAP_MOVE_RIGHT(pos)) {
-#if 0
+#if 1
 		/* Draw serf marker */
 		if (MAP_SERF_INDEX(pos) != 0) {
-			gfx_fill_rect(x_base - 2, y_base - 4*MAP_HEIGHT(pos) - 2, 4, 4, 0x40, frame);
+			serf_t *serf = game_get_serf(MAP_SERF_INDEX(pos));
+			const int player_colors[] = { 64, 72, 68, 76 };
+			gfx_fill_rect(x_base - 2, y_base - 4*MAP_HEIGHT(pos) - 2, 4, 4,
+				      player_colors[SERF_PLAYER(serf)], frame);
 		}
 #endif
 
