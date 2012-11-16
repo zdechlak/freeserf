@@ -3626,13 +3626,47 @@ handle_state_knight_free_walking(serf_t *serf)
 				serf_t *other = game_get_serf(MAP_SERF_INDEX(pos));
 				if (SERF_PLAYER(serf) != SERF_PLAYER(other)) {
 					if (other->state == SERF_STATE_KNIGHT_FREE_WALKING) {
-						/* TODO */
-						continue;
+						pos = MAP_MOVE_LEFT(pos);
+						if (!MAP_OCCUPIED(pos)) {
+							serf_log_state_change(serf, SERF_STATE_54);
+							serf->state = SERF_STATE_54;
+							/* TODO copy some state from other serf. */
+							/* serf->s.field_E = other->s.field_B; */
+							/* serf->s.field_F = other->s.field_C; */
+							/* serf->s.field_D = 1; */
+							serf->animation = 99;
+							serf->counter = 255;
+
+							serf_log_state_change(other, SERF_STATE_55);
+							other->state = SERF_STATE_55;
+							/* TODO set some state */
+							/* other->s.field_D = d; */
+							/* other->s.field_E = SERF_INDEX(serf); */
+							return;
+						}
 					} else if (other->state == SERF_STATE_WALKING &&
 						   SERF_TYPE(other) >= SERF_KNIGHT_0 &&
 						   SERF_TYPE(other) <= SERF_KNIGHT_4) {
-						/* TODO */
-						continue;
+						pos = MAP_MOVE_LEFT(pos);
+						if (!MAP_OCCUPIED(pos)) {
+							serf_log_state_change(serf, SERF_STATE_54);
+							serf->state = SERF_STATE_54;
+							/* TODO set some state */
+							/* serf->s.field_D = 0; */
+							serf->animation = 99;
+							serf->counter = 255;
+
+							flag_t *dest = game_get_flag(other->s.walking.dest);
+							building_t *building = dest->other_endpoint.b[DIR_UP_LEFT];
+							building->stock1 -= 1;
+
+							serf_log_state_change(other, SERF_STATE_55);
+							other->state = SERF_STATE_55;
+							/* TODO set some state */
+							/* other->s.field_D = d; */
+							/* other->s.field_E = SERF_INDEX(serf); */
+							return;
+						}
 					}
 				}
 			}
