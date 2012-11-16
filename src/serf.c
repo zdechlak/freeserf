@@ -1154,6 +1154,8 @@ handle_serf_leaving_building_state(serf_t *serf)
 			serf->s.free_walking.neg_dist1 = neg_dist1;
 			serf->s.free_walking.neg_dist2 = neg_dist2;
 			serf->s.free_walking.flags = 0;
+		} else if (serf->state == SERF_STATE_KNIGHT_PREPARE_DEFENDING) {
+			/* No state. */
 		} else {
 			LOGD("serf", "unhandled next state when leaving building.");
 		}
