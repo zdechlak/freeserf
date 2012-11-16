@@ -3613,6 +3613,7 @@ handle_knight_attacking(serf_t *serf)
 
 	uint16_t delta = globals.anim - serf->anim;
 	serf->anim = globals.anim;
+	def_serf->anim = globals.anim;
 	serf->counter -= delta;
 	def_serf->counter = serf->counter;
 
@@ -3624,9 +3625,44 @@ handle_knight_attacking(serf_t *serf)
 				if (serf->state == SERF_STATE_60) {
 					/* TODO */
 				} else {
+					building_t *building = game_get_building(MAP_OBJ_INDEX(def_serf->pos));
+
+					/* Defender returns to building. */
+					serf_start_walking(def_serf, DIR_UP_LEFT, 32);
+					def_serf->anim = globals.anim;
+					serf_log_state_change(def_serf, SERF_STATE_ENTERING_BUILDING);
+					def_serf->state = SERF_STATE_ENTERING_BUILDING;
+					int slope = road_bld_slope_arr[(building->bld >> 2) & 0x3f];
+					def_serf->s.entering_building.slope_len = (slope * serf->counter) >> 5;
+					def_serf->s.entering_building.field_B = -1;
+
+					/* Attacker dies. */
+					serf_log_state_change(serf, SERF_STATE_KNIGHT_ATTACKING_DEFEAT);
+					serf->state = SERF_STATE_KNIGHT_ATTACKING_DEFEAT;
+					serf->animation = 152 + SERF_TYPE(serf);
+					serf->counter = 255;
+					serf->type = (serf->type & 0x80) | (27 << 2) | SERF_PLAYER(serf);
 				}
 			} else {
 				/* Attacker won. */
+				if (serf->state == SERF_STATE_60) {
+					/* TODO */
+				} else {
+					/* Defender dies. */
+					def_serf->anim = globals.anim;
+					def_serf->animation = 147 + SERF_TYPE(serf);
+					def_serf->counter = 255;
+					def_serf->type = (def_serf->type & 0x80) | (27 << 2) | SERF_PLAYER(def_serf);
+
+					/* Attacker */
+					serf_log_state_change(serf, SERF_STATE_KNIGHT_ATTACKING_VICTORY);
+					serf->state = SERF_STATE_KNIGHT_ATTACKING_VICTORY;
+					serf->animation = 168;
+					serf->counter = 0;
+
+					building_t *building = game_get_building(MAP_OBJ_INDEX(def_serf->pos));
+					if (building->stock1 != 0xff) building->stock1 -= 1;
+				}
 			}
 		} else {
 			/* Go to next move in fight sequence. */
