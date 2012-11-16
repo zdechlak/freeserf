@@ -282,6 +282,7 @@ typedef struct {
 		struct {
 			int field_B; /* B */
 			int field_C; /* C */
+			int field_D; /* D */
 			int def_index; /* E */
 		} attacking;
 

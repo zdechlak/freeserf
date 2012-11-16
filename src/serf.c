@@ -3586,6 +3586,66 @@ handle_serf_knight_prepare_defending_state(serf_t *serf)
 }
 
 static void
+handle_knight_attacking(serf_t *serf)
+{
+	const int moves[] =  {
+		1, 2, 4, 2, 0, 2, 4, 2, 1, 0, 2, 2, 3, 0, 0, -1,
+		3, 2, 2, 3, 0, 4, 1, 3, 2, 4, 2, 2, 3, 0, 0, -1,
+		2, 1, 4, 3, 2, 2, 2, 3, 0, 3, 1, 2, 0, 2, 0, -1,
+		2, 1, 3, 2, 4, 2, 3, 0, 0, 4, 2, 0, 2, 1, 0, -1,
+		3, 1, 0, 2, 2, 1, 0, 2, 4, 2, 2, 3, 0, 0, -1,
+		0, 3, 1, 2, 3, 4, 2, 1, 2, 0, 2, 4, 0, 2, 0, -1,
+		0, 2, 1, 2, 4, 2, 3, 0, 2, 4, 3, 2, 0, 0, -1,
+		0, 0, 1, 4, 3, 2, 2, 1, 2, 0, 0, 4, 3, 0, -1
+	};
+
+	const int fight_anim[] = {
+		24, 35, 41, 56, 67, 72, 83, 89, 100, 121, 0, 0, 0, 0, 0, 0,
+		26, 40, 42, 57, 73, 74, 88, 104, 106, 120, 122, 0, 0, 0, 0, 0,
+		17, 18, 23, 33, 34, 38, 39, 98, 102, 103, 113, 114, 118, 119, 0, 0,
+		130, 133, 134, 135, 147, 148, 161, 162, 164, 166, 167, 0, 0, 0, 0, 0,
+		50, 52, 53, 70, 129, 131, 132, 146, 149, 151, 0, 0, 0, 0, 0, 0
+	};
+
+	const int fight_anim_max[] = { 10, 11, 14, 11, 10 };
+
+	serf_t *def_serf = game_get_serf(serf->s.attacking.def_index);
+
+	uint16_t delta = globals.anim - serf->anim;
+	serf->anim = globals.anim;
+	serf->counter -= delta;
+	def_serf->counter = serf->counter;
+
+	while (serf->counter < 0) {
+		int move = moves[serf->s.attacking.field_B];
+		if (move < 0) {
+			if (serf->s.attacking.field_C == 0) {
+				/* Defender won. */
+				if (serf->state == SERF_STATE_60) {
+					/* TODO */
+				} else {
+				}
+			} else {
+				/* Attacker won. */
+			}
+		} else {
+			/* Go to next move in fight sequence. */
+			serf->s.attacking.field_B += 1;
+			if (serf->s.attacking.field_C == 0) move = 4 - move;
+			serf->s.attacking.field_D = move;
+
+			int off = (random_int() * fight_anim_max[move]) >> 16;
+			int a = fight_anim[move*16 + off];
+
+			serf->animation = 146 + ((a >> 4) & 0xf);
+			def_serf->animation = 156 + (a & 4);
+			serf->counter = 72 + (random_int() & 0x18);
+			def_serf->counter = serf->counter;
+		}
+	}
+}
+
+static void
 handle_serf_knight_attacking_victory_state(serf_t *serf)
 {
 	serf_t *def_serf = game_get_serf(serf->s.attacking.def_index);
@@ -4114,9 +4174,10 @@ update_serf(serf_t *serf)
 		handle_serf_knight_prepare_defending_state(serf);
 		break;
 	case SERF_STATE_KNIGHT_ATTACKING:
-		/* TODO */
+		handle_knight_attacking(serf);
 		break;
 	case SERF_STATE_KNIGHT_DEFENDING:
+		/* The actual fight update is handled for the attacking knight. */
 		break;
 	case SERF_STATE_KNIGHT_ATTACKING_VICTORY: /* 50 */
 		handle_serf_knight_attacking_victory_state(serf);
